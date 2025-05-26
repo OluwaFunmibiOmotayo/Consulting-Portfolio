@@ -1,0 +1,126 @@
+# Load libraries
+library(ggplot2)
+library(dplyr)
+library(patchwork)
+library(grid)
+library(readxl)  # For reading Excel files
+
+# Load data from Excel files - update these paths to your files
+accuracy_df <- read_excel("accuracy_data_cs.xlsx")
+true_acc_df <- read_excel("true_accuracy_data_cs.xlsx")
+
+# Define variance permutation lookup based on Image 1
+varperm_table <- data.frame(
+  VarPerm = 1:9,
+  sigma_y2 = c(4.381519, 4.381519, 6.708053, 6.708053, 9.022741, 9.022741, 4.381519, 6.708053, 9.022741),
+  sigma_z2 = c(6.708053, 9.022741, 4.381519, 9.022741, 4.381519, 6.708053, 4.381519, 6.708053, 9.022741),
+  sigma_w2 = c(9.022741, 6.708053, 9.022741, 4.381519, 6.708053, 4.381519, 4.381519, 6.708053, 9.022741)
+)
+
+# Define rho combinations lookup based on Image 2
+rho_table <- data.frame(
+  RhoPerm = 1:9,
+  rho_yz = c(0.2, 0.2, 0.5, 0.5, 0.9, 0.9, 0.2, 0.5, 0.9),
+  rho_yw = c(0.5, 0.9, 0.2, 0.9, 0.2, 0.5, 0.2, 0.5, 0.9),
+  rho_zw = c(0.9, 0.5, 0.9, 0.2, 0.5, 0.2, 0.2, 0.5, 0.9)
+)
+
+
+# Function to create plot for a specific scenario
+create_scenario_plot <- function(scenario_id, accuracy_data, true_acc_data) {
+  # Filter data for this scenario
+  scenario_accuracy <- accuracy_data %>% filter(Scenario == scenario_id)
+  scenario_true_acc <- true_acc_data %>% filter(Scenario == scenario_id)
+  
+  # Ensure Rho is ordered correctly
+  scenario_accuracy$Rho <- factor(scenario_accuracy$Rho, levels = c("0", "0.2", "0.5", "0.9","0.95","0.99"))
+  scenario_true_acc$Rho <- factor(scenario_true_acc$Rho, levels = c("0", "0.2", "0.5", "0.9","0.95","0.99"))
+  
+  # Get VarPerm and RhoPerm from the true_acc data
+  varperm_id <- as.numeric(unique(scenario_true_acc$VarPerm)[1])
+  rhoperm_id <- as.numeric(unique(scenario_true_acc$RhoPerm)[1])
+  
+  # Look up the variance and correlation values
+  varperm_row <- varperm_table %>% filter(VarPerm == varperm_id)
+  rho_row <- rho_table %>% filter(RhoPerm == rhoperm_id)
+  
+  # Get values for subtitle
+  sigma_y2 <- round(varperm_row$sigma_y2, 3)
+  sigma_z2 <- round(varperm_row$sigma_z2, 3)
+  sigma_w2 <- round(varperm_row$sigma_w2, 3)
+  rho_yz <- rho_row$rho_yz
+  rho_yw <- rho_row$rho_yw
+  rho_zw <- rho_row$rho_zw
+  
+  # Create the plot
+  acc_plot <- ggplot() +
+    # Accuracy lines and points
+    geom_line(data = scenario_accuracy, 
+              aes(x = Rho, y = Accuracy, color = Model, group = Model), 
+              size = 1) +
+    geom_point(data = scenario_accuracy, 
+               aes(x = Rho, y = Accuracy, color = Model), 
+               size = 2) +
+    # True accuracy dashed lines
+    geom_hline(data = scenario_true_acc, 
+               aes(yintercept = TrueAccuracy), 
+               linetype = "dashed", color = "red", size = 0.7) +
+    geom_point(data = scenario_true_acc, 
+               aes(x = Rho, y = TrueAccuracy), 
+               shape = 18, size = 4, color = "black") +
+    geom_text(data = scenario_true_acc, 
+              aes(x = Rho, y = TrueAccuracy, 
+                  label = paste0("True Accuracy: ", TrueAccuracy)),
+              vjust = -0.8, color = "black", fontface = "bold", size = 3.5) +
+    # Labels and styling
+    labs(
+      title = paste("Model Performance Comparison Across Different Correlation Levels for AR(1)"),
+      
+      subtitle = bquote(
+        "Rho"[yz]~"="~.(rho_yz)~", Rho"[yw]~"="~.(rho_yw)~", Rho"[zw]~"="~.(rho_zw)~"." * 
+          "\nVariance is: "~sigma[y]^2~"="~.(sigma_y2)~","~
+          sigma[z]^2~"="~.(sigma_z2)~","~
+          sigma[w]^2~"="~.(sigma_w2)
+      ),
+      x = "Rho (Correlation among observations)",
+      y = "Accuracy",
+      color = "Model"
+    ) +
+    scale_y_continuous(limits = c(min(scenario_accuracy$Accuracy), 0.85), 
+                       breaks = seq(min(scenario_accuracy$Accuracy), 0.85, 0.02)) +
+    theme_minimal() +
+    theme(
+      plot.title = element_text(hjust = 0.5),
+      plot.subtitle = element_text(hjust = 0.5),
+      legend.position = "right",
+      legend.background = element_rect(fill = "white", color = NA),
+      legend.key = element_rect(fill = "white", color = NA),
+      panel.grid = element_blank(),
+      panel.background = element_rect(fill = "white"),
+      plot.caption = element_text(size = 11, face = "italic", hjust = 0)
+    )
+  
+  return(acc_plot)
+}
+
+# Set consistent theme elements
+theme_update(
+  text = element_text(family = "sans", size = 12),
+  plot.title = element_text(size = 14, hjust = 0.5)
+)
+
+# Get list of unique scenarios
+scenarios <- unique(accuracy_df$Scenario)
+
+# Process each scenario
+for (scenario in scenarios) {
+  plot <- create_scenario_plot(scenario, accuracy_df, true_acc_df)
+  
+  # Display the plot (optional - comment out if you only want to save)
+  print(plot)
+  
+  # Save the plot
+  filename <- paste0("AR1_Lowest_", scenario, ".png")
+  ggsave(filename, plot, width = 10, height = 6, dpi = 300)
+}
+

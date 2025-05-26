@@ -1,0 +1,43 @@
+library(tidyverse)
+library(ISLR)
+library(tree)
+data(OJ)
+
+#Question A
+set.seed(1806)
+train_idx <- sample(nrow(OJ), 800)  
+dat_train <- OJ[train_idx, ]  
+dat_test <- OJ[-train_idx, ]  
+
+
+#Question B
+train_tree <- tree(Purchase ~ ., data=dat_train)
+summary(train_tree)
+
+plot(train_tree)
+text(train_tree, pretty = 0, cex = 0.8)
+
+test_pred <- predict(train_tree, dat_test, type = "class")
+table(test_pred, test_actual = dat_test$Purchase)
+mean(test_pred != dat_test$Purchase)
+
+
+set.seed(1806)
+
+cv_tree_model <- cv.tree(train_tree, FUN = prune.misclass)
+cv_tree_model
+
+
+plot(cv_tree_model$size, cv_tree_model$dev, type = "b", xlab = "Tree Size", ylab = "Deviance")
+
+pruned_tree_model <- prune.tree(train_tree, best = 4)
+pruned_tree_model
+
+
+mean(predict(train_tree, type = "class") != dat_train$Purchase)
+
+mean(predict(pruned_tree_model, type = "class") != dat_train$Purchase)
+
+mean(predict(train_tree, type = "class", newdata = dat_test) != dat_test$Purchase)
+
+mean(predict(pruned_tree_model, type = "class", newdata = dat_test) != dat_test$Purchase)

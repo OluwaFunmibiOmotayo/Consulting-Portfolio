@@ -1,0 +1,534 @@
+library(readr)
+library(dplyr)
+library(car)
+library(lme4)
+library(glmmTMB)
+
+#Data Import
+Fungicide_Data <- read_csv("Fungicide Exp 5 Design.csv")
+View(Fungicide_Data)
+
+str(Fungicide_Data)
+
+Fungicide_Data$Avg_Measurement <- rowMeans(Fungicide_Data[,c("Measurement 1","Measurement 2", "Measurement 3","Measurement 4")], na.rm = TRUE)
+summary(Fungicide_Data$Avg_Measurement)
+
+Fungicide_Data[is.na(Fungicide_Data$Avg_Measurement),]
+Fungicide_Data <- Fungicide_Data[!is.na(Fungicide_Data$Avg_Measurement), ]
+
+
+# Remove the four measurement columns
+Fungicide_Data <- Fungicide_Data[, !(names(Fungicide_Data) %in% c("Measurement 1", "Measurement 2", "Measurement 3", "Measurement 4","Comments","Dates"))]
+str(Fungicide_Data)
+
+
+# Rename variables
+Fungicide_Data <- Fungicide_Data %>% rename(Dose = ...10)
+
+#Converting to a Factor
+Fungicide_Data <- Fungicide_Data %>%
+  mutate(
+    Species = as.factor(Species),
+    Isolates = as.factor(Isolates),
+    Treatments = as.factor(Treatments),
+    Dilution = as.factor(Dilution),
+    techRep = as.factor(techRep),
+    Exp_Code = as.factor(Exp_Code),
+    Dose = as.factor(Dose)
+  )
+
+# Check the structure of the dataset
+str(Fungicide_Data)
+summary(Fungicide_Data)
+
+library(skimr)
+skim(Fungicide_Data$Avg_Measurement)
+
+percentage_zeros <- sum(Fungicide_Data$Avg_Measurement == 0, na.rm = TRUE) / nrow(Fungicide_Data) * 100
+print(percentage_zeros)
+
+# Check if any groups have complete separation
+table(Fungicide_Data$Species, Fungicide_Data$Avg_Measurement > 0)
+table(Fungicide_Data$Treatments, Fungicide_Data$Avg_Measurement > 0)
+
+library(ggplot2)
+ggplot(Fungicide_Data, aes(x=Species, y=Avg_Measurement)) + geom_boxplot()
+
+ggplot(Fungicide_Data, aes(x=Treatments, y=Avg_Measurement)) + geom_boxplot()
+
+###################################################################################################################################
+                                                    #Normal Distribution
+###################################################################################################################################
+library(lme4)
+library(emmeans)
+model1 <- lmer(Avg_Measurement ~ Species * Treatments + 
+                 (1 | Dose:Treatments) + (1 | Species:Dose:Treatments), 
+               data = Fungicide_Data)
+
+# ANOVA Table
+summary(model1)
+
+car::Anova(model1, type = 3)
+
+# Pairwise Comparisons (Tukey-adjusted)
+emmeans(model1, pairwise ~ Treatments, adjust = "tukey")
+emmeans(model1, pairwise ~ Species, adjust = "tukey")
+emmeans(model1, pairwise ~ Treatments | Species, adjust = "tukey")
+emmeans(model1, pairwise ~ Treatments * Species, adjust = "tukey")
+
+###################################################################################################################################
+
+#####################################################################################################################################################
+# Model diagnostics
+#####################################################################################################################################################
+plot(model1)
+
+par(mfrow = c(2,2))
+
+#Normality of residuals
+
+# QQ plot
+qqnorm(residuals(model1))
+qqline(residuals(model1))
+
+# Histogram of residuals
+hist(residuals(model1))
+
+# Shapiro-Wilk test
+shapiro.test(residuals(model1))
+
+#Homogeneity of variance
+
+# Plot residuals vs fitted values
+plot(fitted(model1), residuals(model1))
+abline(h=0, col="red")
+
+# Check for influential observations
+# Cook's distance plot
+plot(cooks.distance(model1))
+
+# 3. Independence and Homogeneity
+# Plot residuals vs each predictor
+plot(residuals(model1) ~ Fungicide_Data$Treatments)
+plot(residuals(model1) ~ Fungicide_Data$Species)
+
+par(mfrow = c(1,1))
+###################################################################################################################################
+
+#####################################################################################################################################
+                                      # Normal Distribution on Filtered Data
+#####################################################################################################################################
+Fungicide_filtered <- subset(Fungicide_Data, Avg_Measurement > 0)
+
+model2 <- lmer(Avg_Measurement ~ Species * Treatments + 
+                 (1 | Dose:Treatments) + (1 | Species:Dose:Treatments), 
+               data = Fungicide_filtered)
+summary(model2)
+
+car::Anova(model1, type = 3)
+
+# Pairwise Comparisons (Tukey-adjusted)
+emmeans(model2, pairwise ~ Treatments, adjust = "tukey")
+emmeans(model1, pairwise ~ Species, adjust = "tukey")
+emmeans(model2, pairwise ~ Treatments | Species, adjust = "tukey")
+emmeans(model2, pairwise ~ Treatments * Species, adjust = "tukey")
+####################################################################################################################################
+
+#####################################################################################################################################
+                                   # Gamma Distribution on Filtered Data
+#####################################################################################################################################
+
+model3 <- glmmTMB(Avg_Measurement ~ Species * Treatments + 
+                           (1 | Dose:Treatments) + (1 | Species:Dose:Treatments), 
+                         data = Fungicide_filtered, 
+                         family = Gamma(link = "log"))
+
+# ANOVA Table
+summary(model3)
+
+car::Anova(model3, type = 3)
+
+# Pairwise Comparisons (Tukey-adjusted)
+emmeans(model3, pairwise ~ Treatments, adjust = "tukey")
+emmeans(model1, pairwise ~ Species, adjust = "tukey")
+emmeans(model3, pairwise ~ Treatments | Species, adjust = "tukey")
+emmeans(model3, pairwise ~ Treatments * Species, adjust = "tukey")
+####################################################################################################################################
+
+
+######################################################################################################################################################
+                                                  #Zero-Inflated Gamma Model
+########################################################################################################################################
+#Fungicide_Data$Species <- factor(Fungicide_Data$Species, levels = c("Fusarium oxysporum", "Diaporthe longicolla", 
+#                                                                    "Fusarium solani", "Rhizoctonia solani"))
+
+zigamma_model <- glmmTMB(Avg_Measurement ~ Species * Treatments + (1 | Dose:Treatments) +(1 | Species:Dose:Treatments),  
+                         family = ziGamma(link = "log"), 
+                         ziformula = ~ 1, 
+                         data = Fungicide_Data)
+#zigamma_model <- update(zigamma_model, dispformula = ~ Species * Treatments)
+
+zigamma_model <- glmmTMB(Avg_Measurement ~ Species * Treatments + (1 | Dose:Treatments) +(1 | Species:Dose:Treatments),  
+                         family = ziGamma(link = "log"), 
+                         ziformula = ~ Species + Treatments + (1 | Dose:Treatments), 
+                         data = Fungicide_Data)
+
+# Summary of the Model
+summary(zigamma_model)
+
+car::Anova(zigamma_model, type = 3)
+
+# Anova for the conditional (non-zero) part of the model
+Anova(zigamma_model, component = "cond", type = 3)
+
+# Anova for the zero-inflation part of the model
+Anova(zigamma_model, component = "zi", type = 3)
+
+library(parameters)
+model_parameters(zigamma_model, exponentiate = T)
+
+######################################################################################################################################
+
+########################################## Model Fit for Zero-Inflated ################################################################
+library(DHARMa)
+sim_res <- simulateResiduals(zigamma_model)
+plot(sim_res)  
+
+resid_plot <- plotResiduals(sim_res, form = Fungicide_Data$Avg_Measurement)
+testDispersion(sim_res)
+
+
+# Extract residuals and fitted values
+library(lmtest)
+bp_test <- bptest(zigamma_model)
+print(bp_test) #Heteroscedasticity  detected
+
+VarCorr(zigamma_model)
+testZeroInflation(sim_res)
+
+#######################################################################################################################################
+                                         #Tweedie Model
+#######################################################################################################################################
+tweedie_model <- glmmTMB(
+  Avg_Measurement ~ Species * Treatments + (1 | Dose:Treatments) + (1 | Species:Dose:Treatments),  
+  family = tweedie(link = "log"),  
+  data = Fungicide_Data
+)
+#tweedie_model <- update(tweedie_model, dispformula = ~ Species * Treatments)
+summary(tweedie_model)
+
+car::Anova(tweedie_model, type = 3)
+
+
+model_parameters(tweedie_model, exponentiate = T)
+####################################################################################################################################
+########################################## Model Fit for Tweedie ###################################################################
+tweedie_res <- simulateResiduals(tweedie_model)
+plot(tweedie_res)
+
+
+testDispersion(tweedie_res)
+
+testZeroInflation(tweedie_res)
+#######################################################################################################################################
+#LogNormal Model
+#######################################################################################################################################
+ziln_model <- glmmTMB(Avg_Measurement ~ Species * Treatments + (1 | Dose:Treatments) + (1 | Species:Dose:Treatments),  
+                      family = lognormal(link = "log"), 
+                      ziformula = ~ Species + Treatments + (1 | Dose:Treatments), 
+                      data = Fungicide_Data)
+
+#ziln_model <- update(ziln_model, dispformula = ~ Species * Treatments)
+
+# Summary of the Model
+summary(ziln_model)
+
+car::Anova(ziln_model, type = 3)
+anova(ziln_model, update(ziln_model, dispformula = ~1))
+
+
+########################################## Model Fit for LogNormal ###################################################################
+ziln_res <- simulateResiduals(ziln_model)
+plot(ziln_res)
+
+
+testDispersion(ziln_model)
+
+testZeroInflation(ziln_model)
+
+
+##########################################################
+AIC(zigamma_model, ziln_model, tweedie_model)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+library(lme4)
+
+vg_Measurement ~ Species * Treatments + 
+  (1 | Dose:Treatments)+
+  (1 | Species:Dose:Treatments) 
+
+library(lme4)
+
+binary_model <- glmer(I(Avg_Measurement > 0) ~ Species * Treatments + 
+                      
+                        (1 | Dose:Treatments) +  
+                        (1 | Species:Dose:Treatments),
+                      family = binomial,
+                      data = Fungicide_Data)
+
+summary(binary_model)
+
+
+# Check if any groups have complete separation
+table(Fungicide_Data$Species, Fungicide_Data$Avg_Measurement > 0)
+table(Fungicide_Data$Treatments, Fungicide_Data$Avg_Measurement > 0)
+summary(glm(Avg_Measurement > 0 ~ Treatments * logDose + I(logDose^2), data = Fungicide_Data, family = binomial))
+
+#Endura 1 active ingr (Boscalid) and Quadris 1 active ingr (Azoxystrobin) have a complete sepration
+
+
+# Then model the non-zero measurements
+continuous_model <- lmer(Avg_Measurement ~ Species * Treatments + 
+                           (1 | Dose:Treatments) +  
+                           (1 | Species:Dose:Treatments),
+                         data = subset(Fungicide_Data, Avg_Measurement > 0))
+summary(continuous_model)
+
+par(mfrow = c(2,2))
+qqnorm(residuals(continuous_model))
+qqline(residuals(continuous_model))
+hist(residuals(continuous_model))
+shapiro.test(residuals(continuous_model))
+
+# Plot residuals vs fitted values
+plot(fitted(continuous_model), residuals(continuous_model))
+abline(h=0, col="red")
+
+plot(cooks.distance(continuous_model))
+
+plot(residuals(continuous_model) ~ Fungicide_Data$Treatments)
+plot(residuals(continuous_model) ~ Fungicide_Data$Species)
+
+par(mfrow = c(1,1))
+
+
+gamma_model <- glmer(Avg_Measurement ~ Species * Treatments + 
+                       (1 | Dose:Treatments) +  
+                       (1 | Species:Dose:Treatments),
+                     data = subset(Fungicide_Data, Avg_Measurement > 0),
+                     family = Gamma(link = "log"))
+
+summary(gamma_model)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#log-transformed dose (added small constant to handle zeros)
+Fungicide_Data$logDose <- log10(Fungicide_Data$Dose + 0.01)
+
+library(lme4)
+library(emmeans)
+
+mixed_model <- lmer(Avg_Measurement ~ Species|Treatments + Dose/Treatments, data = Fungicide_Data)
+
+# Summary of the model
+summary(mixed_model)
+
+# LSMeans comparisons (equivalent to SAS lsmeans)
+emmeans(lmm_model, pairwise ~ Treatments, adjust = "tukey")  # Treatments LSMeans
+emmeans(lmm_model, pairwise ~ Treatments * Species, adjust = "tukey")  # Treatments x Species
+emmeans(lmm_model, pairwise ~ Dose | Treatments * Species, adjust = "tukey")  # Slice Dose(Treatments) by Species
+
+
+
+lme_model1 <- lmer(Avg_Measurement ~ Treatments + logDose/Treatments + 
+                     (1 | Species) +                    
+                     (1 | Species:Treatments)+
+                     (1 | Species:logDose/Treatments),       
+                   data = Fungicide_Data, REML = FALSE)
+
+lme_model1 <- lmer(Avg_Measurement ~ Treatments + logDose:Treatments + 
+                     (1 | Species) +                    
+                     (1 | Species:Treatments) + 
+                     (1 | Species:logDose:Treatments),       
+                   data = Fungicide_Data, REML = FALSE)
+
+summary(lme_model1)
+
+
+
+lme_model2 <- lmer(Avg_Measurement ~  Treatments + logDose/Treatments + I(logDose^2)/Treatments + 
+                     (1 |Species) +              
+                     (1 | Species:Treatments)+
+                     (1 |Species:logDose/Treatments), 
+                   data = Fungicide_Data)
+summary(lme_model2)
+
+
+
+# ANOVA for fixed effects
+anova(lme_model1)
+anova(lme_model2)
+
+car::Anova(lme_model,type ="III")
+car::Anova(lme_model2,type ="III")
+
+
+# Random effects structure
+print(VarCorr(lme_model), comp = "Variance")
+
+#Likelihood Ratio Test
+anova(lme_model1, lme_model2)
+
+# Extract random effects
+ranef(lme_model2)
+
+# Extract fixed effects
+fixef(lme_model2)
+#####################################################################################################################################################
+# Model diagnostics
+#####################################################################################################################################################
+par(mfrow = c(2,2))
+
+#Normality of residuals
+
+# QQ plot
+qqnorm(residuals(lme_model1))
+qqline(residuals(lme_model1))
+
+qqnorm(residuals(lme_model2))
+qqline(residuals(lme_model2))
+
+# Histogram of residuals
+hist(residuals(lme_model1))
+
+hist(residuals(lme_model2))
+
+# Shapiro-Wilk test
+shapiro.test(residuals(lme_model1))
+
+shapiro.test(residuals(lme_model2))
+
+#Homogeneity of variance
+
+# Plot residuals vs fitted values
+plot(fitted(lme_model1), residuals(lme_model1))
+abline(h=0, col="red")
+
+plot(fitted(lme_model2), residuals(lme_model2))
+abline(h=0, col="red")
+
+# 3. Independence and Homogeneity
+# Plot residuals vs each predictor
+plot(residuals(mod2) ~ Fungicide_Data$Treatments)
+plot(residuals(mod2) ~ Fungicide_Data$Species)
+
+# Check for influential observations
+# Cook's distance plot
+plot(cooks.distance(lme_model1))
+######################################################################################################################################################
+
+#nrow(Fungicide_Data)
+#length(residuals(mod2))
+#missing_rows <- !rownames(Fungicide_Data) %in% names(residuals(mod2))
+#Fungicide_Data[missing_rows, ]
+
+Fungicide_Data$logAvg_Measurement <- log(Fungicide_Data$Avg_Measurement + 1)
+
+#####################################################################################################################################################
+#Trying some other model
+#####################################################################################################################################################
+
+
+
+
+
+library(tweedie)
+library(statmod)  
+tweedie_glm <- glm(Avg_Measurement ~ Treatments + Species + Treatments:logDose,
+                   family = tweedie(link.power = 0, var.power = 1.5),  
+                   data = Fungicide_Data)
+
+summary(tweedie_glm)
+
+tweedie_glm <- glm(Avg_Measurement ~ Treatments + Species + Treatments:Species +
+                     logDose * Treatments + Species:logDose:Treatments, 
+                   family = tweedie(link.power = 0, var.power = 1.5),  
+                   data = Fungicide_Data)
+
+Fungicide_Data$Avg_Measurement_adj <- Fungicide_Data$Avg_Measurement + 1
+
+lme_model <- glmmTMB(Avg_Measurement_adj ~ Treatments * logDose + I(logDose^2) + 
+                       (1|Species) + (1|Treatments:Dose), 
+                     data = Fungicide_Data, 
+                     family = gaussian(link = "log"),
+                     ziformula = ~ Treatments + logDose)  
+
+
+lme_model_gamma <- glmmTMB(Avg_Measurement_adj ~ Treatments * logDose + I(logDose^2) + 
+                             (1|Species) + (1|Treatments:Dose), 
+                           data = Fungicide_Data, 
+                           family = Gamma(link = "log"),
+                           ziformula = ~ Treatments + logDose)
+
+lme_model_tweedie <- glmmTMB(Avg_Measurement_adj ~ Treatments * logDose + I(logDose^2) + 
+                               (1|Species) + (1|Treatments:Dose), 
+                             data = Fungicide_Data, 
+                             family = tweedie(link = "log"),
+                             ziformula = ~ Treatments + logDose)
+########################################################################################################################################
+
+# Load required packages
+library(glmmTMB)
+library(parameters)  # for model_parameters function
+
+# Create a zero-inflated Gamma model for your fungicide data
+zigamma_fungicide <- glmmTMB(Avg_Measurement ~ Treatments + logDose/Treatments + 
+                               (1 | Species) + (1 | Species:Treatments) + 
+                               (1 | Species:logDose/Treatments),
+                             family = ziGamma(link = "log"),
+                             ziformula = ~ Treatments + logDose/Treatments,
+                             data = Fungicide_Data)
+
+# Examine model parameters with exponentiated coefficients
+model_parameters(zigamma_fungicide, exponentiate = TRUE)
+
+
+
+
+
+
+
+

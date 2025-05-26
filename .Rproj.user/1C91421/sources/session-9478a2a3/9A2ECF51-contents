@@ -1,0 +1,86 @@
+# Load libraries
+library(ggplot2)
+library(dplyr)
+library(patchwork)  # for combining plots
+library(grid)
+
+# Main data
+accuracy_df <- data.frame(
+  Rho = rep(c("0", "0.2", "0.5", "0.9"), each = 5),
+  Model = rep(c("KNN", "LDA", "NN", "RF", "SVM"), times = 4),
+  Accuracy = c(
+    0.597, 0.645, 0.607, 0.603, 0.638,
+    0.596, 0.647, 0.610, 0.602, 0.634,
+    0.601, 0.648, 0.611, 0.608, 0.639,
+    0.657, 0.654, 0.642, 0.660, 0.676
+    
+  )
+)
+
+
+# True accuracy data
+true_acc_df <- data.frame(
+  Rho = c("0", "0.2", "0.5", "0.9"),
+  TrueAccuracy = c(0.80, 0.76, 0.72, 0.66)
+)
+
+
+# Ensure Rho is ordered
+accuracy_df$Rho <- factor(accuracy_df$Rho, levels = c("0", "0.2", "0.5", "0.9"))
+true_acc_df$Rho <- factor(true_acc_df$Rho, levels = c("0", "0.2", "0.5", "0.9"))
+
+# Set consistent theme elements
+theme_update(
+  text = element_text(family = "sans", size = 12),
+  plot.title = element_text(size = 14, hjust = 0.5)
+)
+
+acc_plot <- ggplot() +
+  # Accuracy lines and points
+  geom_line(data = accuracy_df, 
+            aes(x = Rho, y = Accuracy, color = Model, group = Model), 
+            size = 1) +
+  geom_point(data = accuracy_df, 
+             aes(x = Rho, y = Accuracy, color = Model), 
+             size = 2) +
+  # True accuracy dashed lines
+  geom_hline(data = true_acc_df, 
+             aes(yintercept = TrueAccuracy), 
+             linetype = "dashed", color = "red", size = 0.7) +
+  geom_point(data = true_acc_df, 
+             aes(x = Rho, y = TrueAccuracy), 
+             shape = 18, size = 4, color = "black") +
+  geom_text(data = true_acc_df, 
+            aes(x = Rho, y = TrueAccuracy, 
+                label = paste0("True Accuracy: ", TrueAccuracy)),
+            vjust = -0.8, color = "black", fontface = "bold", size = 3.5) +
+  # Labels and styling
+  labs(
+    title = "Model Performance Comparison Across Different Correlation Levels for CS",
+    subtitle = expression("Rho"[yz]~"= 0.5, Rho"[yw]~"= 0.5, Rho"[zw]~"= 0.5." * 
+                            "\nVariance is: "~sigma[y]^2~"= 6.708,"~
+                            sigma[z]^2~"= 4.382,"~
+                            sigma[w]^2~"= 9.023 (VarPerm_1)"),
+    x = "Rho (Correlation among observations)",
+    y = "Accuracy",
+    color = "Model"
+  ) +
+  scale_y_continuous(limits = c(0.55, 0.85), 
+                     breaks = seq(0.55, 0.85, 0.02)) +
+  theme_minimal() +  # Using minimal theme as base
+  theme(
+    plot.title = element_text(hjust = 0.5),  # Center the title
+    plot.subtitle = element_text(hjust = 0.5),  # Center the subtitle
+    legend.position = "right",
+    legend.background = element_rect(fill = "white", color = NA),
+    legend.key = element_rect(fill = "white", color = NA),
+    panel.grid = element_blank(),  # Remove all gridlines
+    panel.background = element_rect(fill = "white"),  # White background
+    plot.caption = element_text(size = 11, face = "italic", hjust = 0)
+  )
+
+# Display the plot
+print(acc_plot)
+
+# save the plot
+ggsave("model_accuracy_comparison22.png", acc_plot, width = 10, height = 6, dpi = 300)
