@@ -1,0 +1,577 @@
+\documentclass{beamer}
+\usepackage{graphicx}
+\usetheme{Madrid}
+\usecolortheme{dolphin}
+\usepackage{ragged2e}
+\usepackage{subcaption}
+\usepackage{amsmath}  % For mathematical symbols and equations
+\usepackage{verbatim}
+\usepackage{fancyvrb}
+\usepackage{color}
+\usepackage{tikz}
+\usepackage{hyperref}
+\usepackage{booktabs} % For clean tables
+\usepackage{multicol} % For multiple columns if needed
+
+% Define a custom color using the red from the logo
+\definecolor{NebraskaRed}{RGB}{204,0,0} % Adjust if necessary
+
+% Apply the color to the theme
+\setbeamercolor{structure}{fg=NebraskaRed} 
+\setbeamercolor{frametitle}{fg=white, bg=NebraskaRed}
+\setbeamercolor{title}{fg=white, bg=NebraskaRed}
+\setbeamercolor{subtitle}{fg=white}
+\setbeamercolor{author}{fg=NebraskaRed}
+\setbeamercolor{date}{fg=NebraskaRed}
+\setbeamercolor{section in toc}{fg=NebraskaRed}
+
+
+\title[Portfolio Presentation]{Portfolio Presentation}
+\subtitle{A Hierarchical Zero-Inflated Gamma Analysis of Chemical Efficacy on Soil-Borne Pathogens in Soybean}
+\author{Oluwafunmibi Omotayo Fasanya}
+
+\institute[UNL]{
+    Statistical Cross-disciplinary Collaboration and Consulting Lab (SC3L)\\
+    Department of Statistics\\
+    University of Nebraska–Lincoln
+}
+\date{May 5, 2025}
+
+\begin{document}
+
+\frame{\titlepage}
+
+\begin{frame}{Outline}
+  \begin{itemize}
+    \item Introduction
+    \begin{itemize}
+        \item Background
+        \item Study Objectives
+    \end{itemize}
+    \vspace{0.1cm}
+    \item Materials and Method
+    \begin{itemize}
+        \item Experimental Design
+        \item Two Part Model: Zero Inflated Gamma
+    \end{itemize}
+    \vspace{0.1cm}
+    \item Exploratory Data Analysis 
+    \item Advanced Analysis 
+    \item Conclusion
+    \item References
+  \end{itemize}
+\end{frame}
+
+\section{Introduction}
+
+\begin{frame}{Introduction}
+\small
+\justifying
+\begin{itemize}
+    \item Soybean is a major food and oilseed crop, valued for its high protein content and use in both human and livestock diets.
+    
+    \item In 2013, global soybean production reached 268 million metric tons across 70 countries, led by the U.S. and Brazil (each 31\%), and Argentina (19\%).
+    
+    \item By 2024/2025 (USDA), Brazil, USA, and Argentina are expected to account for 80\% of global soybean output, with Brazil alone producing 40\%.
+    
+    \item Soybean yield losses in US vary annually due to environmental conditions, farming practices, and varietal disease resistance.
+    
+    \item In 2022, 75\% of U.S. soybean production came from 13 Midwestern and Northeastern states, which also suffered 71.3\% of the nation’s total yield loss.
+    
+    \item Seedling diseases due to Fusarium, Pythium, Phomopsis and Rhizoctonia are one of the major causes of soybeans loss in 2022
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Introduction}
+\textbf{Nebraska Context}
+\begin{itemize}
+    \item In Nebraska, the largest producer of beef and pork, Soybeans is one of the major ingredient used in the beef and pork production. 
+    \item However, Nebraska experiences an estimated annual loss exceeding 9 million bushels due to pathogenic organisms.
+    \item Pathogens such as Colletotrichum truncatum, Fusarium virguliforme, Macrophomina phaseolina, Pythium irregulare, Rhizoctonia solani, Sclerotinia sclerotiorum,  are major contributors to soybean seedling diseases, which leads to decrease in soybeans yield. 
+\end{itemize}
+\textbf{Study Objective}
+\begin{itemize}
+    \item Thus, this study seek to investigate the efficacy of chemical applications in controlling soil-borne pathogens of soybean and 
+    \item look at the tolerance of the various pathogens to fungicide at different dose level. 
+\end{itemize}
+
+\end{frame}
+
+
+\begin{frame}{Materials and Method}
+\textbf{Experimental design}
+\begin{itemize}
+    \item The fungicide used was incorporated into the growth medium (petri dish) to ensure there was homogeneous distribution of this chemical across the different fungal species.
+    \item This setup is called Poisoned food and it mimics how the different fungicide would react with the pathogens in natural soil conditions.
+\end{itemize}
+
+\begin{figure}[h]
+    \centering
+    \begin{minipage}{0.5\textwidth}
+         \includegraphics[width=\linewidth]{image.png} 
+         \caption*{\tiny Figure 1: Fungus in a petri dish}
+    \end{minipage}%
+    \hfill
+     \begin{minipage}{0.5\textwidth}
+     \includegraphics[width=\linewidth]{In-Vitro.jpg}
+        \caption*{\tiny Figure 1: Fungus in a petri dish}
+    \end{minipage}
+\end{figure}
+
+\end{frame}
+
+
+
+\begin{frame}{Materials and Method}
+
+\textbf{Fungal Species:}
+\begin{itemize}
+    \item \textit{Diaporthe longicolla} 
+    \item \textit{Fusarium oxysporum} 
+    \item \textit{Fusarium solani} 
+    \item \textit{Rhizoctonia solani}
+\end{itemize}
+
+\vspace{0.3cm}
+\textbf{Fungicide Treatments and Dosages (µg/ml):}
+\begin{table}[h]
+\scriptsize
+\centering
+\begin{tabular}{|l|c|c|c|c|c|}
+\hline
+ & \textbf{DelaroComplete} & \textbf{Endura} & \textbf{Quadris} & \textbf{Topguard} & \textbf{Topguard EQ} \\
+ & (Proth+Trif+Fluop) & (Boscalid) & (Azoxystrobin) & (Flutriafol) & (Flut+Azoxys) \\
+\hline
+High & 6.292 & 4.011 & 6.1036 & 5.7975 & 4.9128 \\
+Medium & 0.6292 & 0.4011 & 0.61036 & 0.57975 & 0.49128 \\
+Low & 0.06292 & 0.04011 & 0.061036 & 0.057975 & 0.049128 \\
+Control & 0 & 0 & 0 & 0 & 0 \\
+\hline
+\end{tabular}
+\end{table}
+
+\vspace{0.2cm}
+\textit{Note: Each fungal species get each fungicide treatment at all dosage levels.}
+
+\end{frame}
+
+\begin{frame}{Two-Part Model: Zero-Inflated Gamma}
+\scriptsize
+\textbf{Motivation:} The radial growth rate of pathogens is semicontinuous—many zeros and a positively skewed distribution. Modelling semicontinuous data with true zero is done in two steps
+\begin{itemize}
+\item First part models the probability that an outcome is non-zero
+\item Second part models the value of an outcome given it is greater than zero
+\end{itemize}
+\vspace{0.1cm}
+\begin{columns}
+\column{0.55\textwidth}
+\textbf{Model Specification:}
+\vspace{-0.2cm}
+\[
+f(y) = (1 - p_{\beta}) I(y = 0) + p_{\beta} G_{\theta}(y \mid y > 0)
+\]
+\vspace{-0.6cm}
+\begin{itemize}
+    \item ${\beta}$: parameter used in modelling the probability of positive response
+    \item ${\theta}$: mean and dispersion parameter of the conditional distribution of the positive response
+    \item $p_{\beta} = P(Y_i > 0 \mid X_i)$, probability of positive response, modeled via logistic regression $\text{logit}(p_{\beta}) = X_i\beta$
+    \item $G_{\theta}(y \mid y > 0)$: Distribution of positive responses, modeled using Gamma regression with log link,
+    \vspace{-0.4cm}
+    \[
+    Y_i \sim \Gamma(\exp(X_i \tau), \nu)
+    \]
+\end{itemize}
+\column{0.45\textwidth}
+\centering
+\includegraphics[width=\linewidth]{Fig9.jpeg} 
+\end{columns}
+
+\vspace{0.1cm}
+\scriptsize
+$\beta$ and $\tau$ is the parameter associated with $X$ in the logistic and Gamma portion of the model.
+\end{frame}
+
+
+
+\begin{frame}{Model Structure}
+\justifying
+{\scriptsize
+
+\textbf{Split-Plot Factor Nested in Whole-Plot Factor}
+
+\begin{table}[h]
+\scriptsize
+\centering
+\begin{tabular}{|l|c|}
+\hline
+\textbf{Source of Variation (SV)} & \textbf{df} \\
+\hline
+Treatment & \( (5 - 1) = 4 \) \\
+Dose(Treatment) & \( (4 - 1) \times 5 = 15 \) \\
+Species & \( (4 - 1) = 3 \) \\
+Treatment * Species & \( (5 - 1) \times (4 - 1) = 12 \) \\
+Species * Dose(Treatment) & \( 3 \times 15 = 45 \) \\
+Error & \( (3 - 1) \times (4 \times 4 \times 5) = 160 \) \\
+\hline
+\end{tabular}
+\end{table}
+\textbf{Model Specification:}
+\begin{equation}
+\begin{aligned}
+\log \left( E[Y_{ijkl} \mid Y_{ijkl} > 0] \right) =\ 
+& \mu + \texttt{Species}_i + \texttt{Treatment}_j + (\texttt{Species} \times \texttt{Treatment})_{ij} \\
+& +\ (1 \mid \texttt{Dose:Treatment}) + (1 \mid \texttt{Species:Dose:Treatment})
+\end{aligned}
+\end{equation}
+
+\textbf{Where:}
+\begin{itemize}
+    \item \( Y_{ijkl} \): Average measurement for the \(i^\text{th}\) species, \(j^\text{th}\) treatment, \(k^\text{th}\) dose, \(l^\text{th}\) dish
+    \item \( \mu \): Baseline log mean fungal growth
+    \item \( e_{ijkl} \sim \text{Gamma}(\alpha, \beta) \): Error term from the Gamma distribution
+    \item \texttt{(1|Dose:Treatments)}: Random variability among doses within treatments.
+    \item \texttt{(1|Species:Dose:Treatments)}: Random variability for species across dose-treatment combinations.
+\end{itemize}
+}
+
+\end{frame}
+
+\begin{frame}{Exploratory Data Analysis}
+\justifying
+
+This section provides a visual summary of the data to understand the distribution, of average fungal growth across treatment and species.
+
+\vspace{0.1cm}
+
+\begin{columns}[T]
+\column{0.5\textwidth}
+\begin{figure}
+    \centering
+    \includegraphics[width=\linewidth]{Fig3.jpeg}
+    \caption*{(a) Fungal Growth by Treatment}
+\end{figure}
+
+\column{0.5\textwidth}
+\begin{figure}
+    \centering
+    \includegraphics[width=\linewidth]{Fig4.jpeg}
+    \caption*{(b) Fungal Growth by Species}
+\end{figure}
+
+\end{columns}
+
+\end{frame}
+
+
+\begin{frame}{Exploratory Data Analysis}
+\justifying
+
+This section provides a visual summary of the distribution of average fungal growth measurements across different fungicide dose levels, split by fungal species and treatment.
+
+\vspace{0.1cm}
+
+\begin{columns}[T]
+\column{0.52\textwidth}
+\begin{figure}
+    \centering
+    \includegraphics[width=\linewidth]{Fig7.jpeg}
+    {\scriptsize
+    \caption*{(c) Fungal Growth by Species and Dose}
+    }
+\end{figure}
+
+\column{0.52\textwidth}
+\begin{figure}
+    \centering
+    \includegraphics[width=\linewidth]{Fig8.jpeg}
+    {\scriptsize
+    \caption*{(d) Fungal Growth by Treatment and Dose}
+    }
+\end{figure}
+
+\end{columns}
+
+\end{frame}
+
+
+\begin{frame}{Advanced Analysis: Random and Fixed Effects Structures}
+\justifying
+
+\begin{columns}[T]
+% ----- Column 1: Random Effects -----
+\column{0.52\textwidth}
+\textbf{Random Effects:}
+\begin{itemize}
+    \item Explains growth variability due to hierarchical structure:
+\end{itemize}
+
+\vspace{0.3cm}
+\begin{figure}
+    \centering
+    \includegraphics[width=\linewidth]{Fig10.png}
+\end{figure}
+
+% ----- Column 2: Fixed Effects -----
+\column{0.52\textwidth}
+\textbf{Fixed Effects from Gamma Model:}
+\begin{itemize}
+\item Marginal species × treatment interaction ($p > 0.05$).
+\end{itemize}
+
+\vspace{0.3cm}
+\begin{figure}
+    \centering
+    \includegraphics[width=\linewidth]{Fig11.png}
+\end{figure}
+
+\end{columns}
+\end{frame}
+
+
+\begin{frame}{Advanced Analysis: Interactions and Pairwise Comparisons}
+\justifying
+
+\begin{columns}[T]
+  % ----- Column 1: Random Effects -----
+  \column{0.52\textwidth}
+  \textbf{Species × Treatment Interactions:}
+
+  \vspace{0.3cm}
+  \begin{figure}
+      \centering
+      \includegraphics[width=\linewidth]{Fig12.jpg}
+  \end{figure}
+
+  % ----- Column 2: Fixed Effects -----
+  \column{0.52\textwidth}
+  \textbf{Pairwise comparisons between species and treatment:}
+
+  \vspace{0.3cm}
+  \begin{figure}
+      \centering
+      \includegraphics[width=\linewidth]{Fig13.jpg}
+      \caption*{\scriptsize\textit{Only extracted significant pairwise difference}}
+  \end{figure}
+\end{columns}
+
+\vspace{0.1cm}  % Add space before full-width content
+
+% ----- Full-width content -----
+\begin{itemize}
+\scriptsize
+    \item Significant interaction between \textit{Fusarium oxysporum} and Quadris 1 active (Azoxystrobin)
+    \item Marginal significant interactions between \textit{Fusarium oxysporum} and Topguard 1 active (Flutriafol), Topguard EQ 2 active (Flutriafol + Azoxystrobin)
+\end{itemize}
+\end{frame}
+
+
+\begin{frame}{Best Linear Unbiased Prediction: Dose within Treatment}
+\begin{columns}
+
+% ----- Column 1: Plot -----
+\column{0.50\textwidth}
+\justifying
+\vspace{0.1cm}
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\linewidth]{Fig14.jpg}
+\end{figure}
+
+% ----- Column 2: Summary -----
+\column{0.55\textwidth}
+\justifying
+
+\begin{itemize}
+    \item \textbf{DelaroComplete:} Control dose has high growth, but growth decreases as dose increase.
+    \vspace{0.1cm}
+    \item \textbf{Endura, Quadris, Topguard, and Topguard EQ 2:} Control and low dose was predicted to increase growth above average, while other doses decrease growth.
+\end{itemize}
+
+
+\end{columns}
+\end{frame}
+
+\begin{frame}{Best Linear Unbiased Prediction: Dose within Treatment}
+\justifying
+\begin{figure}
+    \centering
+    \includegraphics[width=0.90\linewidth]{Fig18.jpeg}
+\end{figure}
+\end{frame}
+
+
+\begin{frame}{BLUP: Species crossed with dose nested within treatment}
+\begin{columns}
+
+% ----- Column 1: Plot -----
+\column{0.50\textwidth}
+\justifying
+\vspace{0.1cm}
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\linewidth]{Fig15.jpg}
+\end{figure}
+
+% ----- Column 2: Summary -----
+\column{0.55\textwidth}
+\justifying
+
+\begin{itemize}
+    \item DelaroComplete and Topguard 1: decrease at control but stable from low to high dose; 
+\vspace{0.1cm}
+\item Endura 1 active: decrease from control to medium but increase at high dose.
+\vspace{0.1cm}
+\item Quadris: decrease at control and low, increase at medium and high dose.
+\vspace{0.1cm}
+\item Topguard EQ: decrease at control, increase at low dose, stable at medium and high dose.
+\end{itemize}
+
+
+\end{columns}
+\end{frame}
+
+\begin{frame}{BLUP: Species crossed with dose nested within treatment}
+\begin{columns}
+
+% ----- Column 1: Plot -----
+\column{0.50\textwidth}
+\justifying
+\vspace{0.1cm}
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\linewidth]{Fig16.jpg}
+\end{figure}
+
+% ----- Column 2: Summary -----
+\column{0.55\textwidth}
+\justifying
+
+\begin{itemize}
+   \item DelaroComplete: increase at control and low, decrease at medium and high.
+\vspace{0.1cm}
+\item Endura 1 active: increase at control, low and high, decrease at high.
+\vspace{0.1cm}
+\item Quadris and Topguard 1:decrease at control and low but decrease at medium and high.
+\vspace{0.1cm}
+\item Topguard EQ: decrease at control and medium, increase at low and high
+\end{itemize}
+
+
+\end{columns}
+\end{frame}
+
+
+\begin{frame}{BLUP: Species crossed with dose nested within treatment}
+\begin{columns}
+
+% ----- Column 1: Plot -----
+\column{0.50\textwidth}
+\justifying
+\vspace{0.1cm}
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\linewidth]{Fig17.jpg}
+\end{figure}
+
+% ----- Column 2: Summary -----
+\column{0.55\textwidth}
+\justifying
+
+\begin{itemize}
+\item DelaroComplete: decrease at control but stable from low to high dose.
+\vspace{0.1cm}
+\item Endura 1 active and Topguard EQ 2: decrease at control and high, increase at low and medium.
+\vspace{0.1cm}
+\item Quadris: decrease at control and low, increase at medium and high.
+\vspace{0.1cm}
+\item Topguard 1: decrease at control, medium and high, increase at medium.
+\end{itemize}
+
+
+\end{columns}
+\end{frame}
+
+
+\begin{frame}{BLUP: Species crossed with dose nested within treatment}
+\begin{columns}
+
+% ----- Column 1: Plot -----
+\column{0.50\textwidth}
+\justifying
+\vspace{0.1cm}
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\linewidth]{Fig18.jpg}
+\end{figure}
+
+% ----- Column 2: Summary -----
+\column{0.55\textwidth}
+\justifying
+
+\begin{itemize}
+\item DelaroComplete: increase at control and high, decrease at low, stable at medium.
+\vspace{0.1cm}
+\item Endura 1 active: increase at control, low and high, decrease at medium.
+\vspace{0.1cm}
+\item Quadris: increase at control and low, decrease at medium and high.
+\vspace{0.1cm}
+\item Topguard 1: increase at control, decrease at low,medium and high.
+\vspace{0.1cm}
+\item Topguard EQ: increase at control and high, decrease at low, and medium.
+\end{itemize}
+
+
+\end{columns}
+\end{frame}
+
+\begin{frame}{BLUP: Species crossed with dose nested within treatment}
+\justifying
+\begin{figure}
+    \centering
+    \includegraphics[width=\linewidth]{Fig21.jpeg}
+\end{figure}
+\end{frame}
+
+\begin{frame}{Conclusion}
+\begin{itemize}
+\scriptsize
+\justifying
+\item \textit{F. oxysporum} differed significantly in growth response compared to species: \textit{F. solani}, \textit{D. longicolla}, \textit{R. solani}) under the following treatment \textbf{Quadris 1 active} (Azoxystrobin), \textbf{Topguard 1 active} (Flutriafol), and \textbf{Topguard EQ 2 active} (Flut+Azoxys) .
+\vspace{0.1cm}
+\item At control dose, delarocomplete treatment has the highest growth, followed by Topguard 1 active, Topguard EQ 2 active, Endura 1 active, Quadris 1 active.
+\vspace{0.1cm}
+\item Topguard 1 active, Topguard EQ 2 active, Endura 1 active, Quadris 1 active continued to grow at low dose but delarocomplete decreased in growth.
+\vspace{0.1cm}
+\item for species crossed with dose nested in treatments, responses varied by species and fungicide, indicating strong species-specific interaction patterns.
+\item Notable differences for \textit{F. oxysporum}, which showed variable trends depending on treatment and dose.
+\vspace{0.1cm}
+\item Overall, effective fungal control depends on both selecting the right treatment and optimizing dose for the specific species involved.
+\end{itemize}
+\end{frame}
+
+
+\begin{frame}
+    \centering
+    \Huge \textbf{Questions?}
+\end{frame}
+
+
+\begin{frame}{References}
+\scriptsize
+\begin{itemize}
+    \item Allen, T., et al. (2023). \textit{Soybean Disease Loss Estimates from the United States and Ontario, Canada — 2022}. \url{https://doi.org/10.31274/cpn-20230421-1}
+    
+    \item CropWatch, University of Nebraska-Lincoln. (n.d.). \textit{Soybean Disease Management}. Retrieved April 28, 2025, from \url{https://cropwatch.unl.edu/plant-disease/soybean/}
+    
+    \item Farm Journal. (2025). \textit{Soybean Blight: How to Identify Pythium, Phytophthora, Fusarium, and Rhizoctonia}. \url{https://www.agweb.com/news/crops/how-identify-soybean-blight}
+    
+    \item Mills, E. D. (2013). \textit{Adjusting for Covariates in Zero-Inflated Gamma and Zero-Inflated Log-Normal Models}. University of Iowa.
+    
+    \item Navi, S., \& Rajasab, A. (2016). \textit{In Vitro Evaluation of Commercial Fungicides Against Major Soil-Borne Pathogens of Soybean}. \textit{Journal of Plant Pathology \& Microbiology}, 7(3). \url{https://doi.org/10.4172/2157-7471.1000340}
+    
+    \item USDA. (2025). \textit{Production - Soybeans}. \url{https://www.fas.usda.gov/data/production/commodity/2222000}
+\end{itemize}
+\end{frame}
+
+
+\end{document}
